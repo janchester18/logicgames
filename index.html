@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Water Transfer Puzzle</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: #87CEEB;
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+
+        .game-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: center;
+            max-width: 600px;
+            width: 100%;
+        }
+
+        .container {
+            background: #fff;
+            border: 3px solid #1E90FF;
+            border-radius: 0 0 20px 20px;
+            position: relative;
+            width: 80px;
+            height: 150px;
+            margin: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .container.selected {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px #1E90FF;
+        }
+
+        .water {
+            background: rgba(30, 144, 255, 0.6);
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            transition: height 0.3s ease;
+        }
+
+        .label {
+            position: absolute;
+            top: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-weight: bold;
+            color: #1E90FF;
+        }
+
+        .volume {
+            position: absolute;
+            bottom: 5px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-weight: bold;
+            color: #1E90FF;
+            z-index: 1;
+        }
+
+        @media (orientation: landscape) {
+            .container {
+                width: 70px;
+                height: 120px;
+            }
+            .game-container {
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h2>Goal: Get 2L in two containers</h2>
+    <div class="game-container">
+        <div class="container" id="c1" data-capacity="10">
+            <div class="label">10L</div>
+            <div class="water"></div>
+            <div class="volume">10L</div>
+        </div>
+        <div class="container" id="c2" data-capacity="10">
+            <div class="label">10L</div>
+            <div class="water"></div>
+            <div class="volume">10L</div>
+        </div>
+        <div class="container" id="c3" data-capacity="5">
+            <div class="label">5L</div>
+            <div class="water"></div>
+            <div class="volume">0L</div>
+        </div>
+        <div class="container" id="c4" data-capacity="4">
+            <div class="label">4L</div>
+            <div class="water"></div>
+            <div class="volume">0L</div>
+        </div>
+    </div>
+    <button onclick="resetGame()" style="margin-top: 20px;">Reset</button>
+
+    <script>
+        let selectedContainer = null;
+        const containers = [
+            { element: document.getElementById('c1'), capacity: 10, volume: 10 },
+            { element: document.getElementById('c2'), capacity: 10, volume: 10 },
+            { element: document.getElementById('c3'), capacity: 5, volume: 0 },
+            { element: document.getElementById('c4'), capacity: 4, volume: 0 }
+        ];
+
+        function updateDisplay() {
+            containers.forEach(container => {
+                const water = container.element.querySelector('.water');
+                const volumeDisplay = container.element.querySelector('.volume');
+                const percentage = (container.volume / container.capacity) * 100;
+                water.style.height = `${percentage}%`;
+                volumeDisplay.textContent = `${container.volume}L`;
+            });
+            checkWin();
+        }
+
+        function handleContainerClick(index) {
+            console.log(`Clicked: C${index + 1}, Selected: ${selectedContainer !== null ? 'C' + (selectedContainer + 1) : 'None'}`);
+
+            if (selectedContainer === null) {
+                // Select source container
+                if (containers[index].volume > 0) {
+                    selectedContainer = index;
+                    containers[index].element.classList.add('selected');
+                    console.log(`Selected C${index + 1}`);
+                }
+            } else {
+                // Transfer water
+                const source = containers[selectedContainer];
+                const dest = containers[index];
+
+                if (selectedContainer !== index) {
+                    const transferAmount = Math.min(source.volume, dest.capacity - dest.volume);
+
+                    console.log(`Transferring ${transferAmount}L from C${selectedContainer + 1} to C${index + 1}`);
+
+                    if (transferAmount > 0) { // Ensure actual transfer happens
+                        source.volume -= transferAmount;
+                        dest.volume += transferAmount;
+                    }
+                }
+
+                // Clear selection
+                containers[selectedContainer].element.classList.remove('selected');
+                selectedContainer = null;
+                updateDisplay();
+            }
+        }
+
+        function checkWin() {
+            const twoLiterCount = containers.filter(c => c.volume === 2).length;
+            if (twoLiterCount >= 2) {
+                setTimeout(() => alert('Congratulations! You won!'), 100);
+            }
+        }
+
+        function resetGame() {
+            containers[0].volume = 10;
+            containers[1].volume = 10;
+            containers[2].volume = 0;
+            containers[3].volume = 0;
+            selectedContainer = null;
+            containers.forEach(c => c.element.classList.remove('selected'));
+            updateDisplay();
+        }
+
+        // Add click handlers using proper element references
+        containers.forEach((_, index) => {
+            containers[index].element.addEventListener('click', () => handleContainerClick(index));
+        });
+
+        // Initial display
+        updateDisplay();
+    </script>
+</body>
+</html>
